@@ -101,6 +101,7 @@ extern void*     sbrk(ptrdiff_t);
 #endif
 #endif
 
+
 /* ------------------- size_t and alignment properties -------------------- */
 
 /* The byte and bit size of a size_t */
@@ -253,17 +254,25 @@ static int win32munmap(void* ptr, size_t size) {
 
 #ifndef WIN32
 /* By default use posix locks */
-#include <pthread.h>
-#define MLOCK_T pthread_mutex_t
-#define INITIAL_LOCK(l)      pthread_mutex_init(l, NULL)
-#define ACQUIRE_LOCK(l)      pthread_mutex_lock(l)
-#define RELEASE_LOCK(l)      pthread_mutex_unlock(l)
+//#include <pthread.h>
+#include "platform_conf.h"
+
+//ACQUIRE_MORECORE_LOCK == ACQUIRE_LOCK
+//RELEASE_MORECORE_LOCK == RELEASE_LOCK
+
+bool chMtxLock_bool(Mutex *mp){chSysLock();return 0;}
+bool chMtxUnLock_bool(Mutex *mp){chSysUnlock();return 0;}
+#define MLOCK_T Mutex
+//~ #define INITIAL_LOCK(l)      chMtxInit(l)
+#define INITIAL_LOCK(l)      
+#define ACQUIRE_LOCK(l)      chMtxLock_bool(l)
+#define RELEASE_LOCK(l)      chMtxUnLock_bool(l)
 
 #if HAVE_MORECORE
-static MLOCK_T morecore_mutex = PTHREAD_MUTEX_INITIALIZER;
+static MLOCK_T morecore_mutex;// = PTHREAD_MUTEX_INITIALIZER;
 #endif /* HAVE_MORECORE */
 
-static MLOCK_T magic_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static MLOCK_T magic_init_mutex;// = PTHREAD_MUTEX_INITIALIZER;
 
 #else /* WIN32 */
 /*
@@ -2909,7 +2918,6 @@ void* dlmalloc(size_t bytes) {
 
      The ugly goto's here ensure that postaction occurs along all paths.
   */
-
   if (!PREACTION(gm)) {
     void* mem;
     size_t nb;
@@ -3014,7 +3022,6 @@ void* dlmalloc(size_t bytes) {
     POSTACTION(gm);
     return mem;
   }
-
   return 0;
 }
 
