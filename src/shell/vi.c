@@ -287,6 +287,8 @@ struct globals *ptr_to_globals;
 //#define IF_FEATURE_VI_READONLY(...) __VA_ARGS__
 #define IF_FEATURE_VI_READONLY(...)
 
+#define ENABLE_FEATURE_VI_UNDO 1
+
 /* Version Number */
 #define BB_VER "1.00"
 #define BB_BT "2004.12.21-09:59+0000"
@@ -326,6 +328,8 @@ static void bb_putchar( u8 data )
 
 static void fflush_all() {
   fflush(stdin);
+  fflush(stdout);
+  fflush(stderr);
 }
 /*******************elua end*******************************************/
 
@@ -1051,6 +1055,9 @@ static void edit_file(char *fn)
     //free(mark[i]);
   }
   free(current_filename);
+  #if ENABLE_FEATURE_VI_UNDO
+  flush_undo_data();
+  # endif
   
 	go_bottom_and_clear_to_eol();
 	cookmode();
